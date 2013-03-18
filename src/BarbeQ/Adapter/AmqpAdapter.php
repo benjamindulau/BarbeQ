@@ -109,7 +109,7 @@ class AmqpAdapter implements AdapterInterface
                 $this->connection['host'],
                 $this->connection['port'],
                 $this->connection['user'],
-                $this->connection['pass'],
+                $this->connection['password'],
                 $this->connection['vhost']
             );
 
