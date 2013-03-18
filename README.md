@@ -36,6 +36,7 @@ $barbeQ->cook('test', new Message(array(
     'id' => 1,
     'foo' => 'bar',
 )));
+// or $barbeQ->publish(...), same action
 ```
 
 `consumer.php`
@@ -67,9 +68,12 @@ $iterations = 3;
 $i = 0;
 foreach ($barbeQ->getMessages('test') as $message) {
     $i++;
-    error_log(sprintf('iteration #%d', $i));
+    echo sprintf("Iteration #%d\n", $i);
+
     $barbeQ->eat($message);
-    error_log(sprintf('Memory: %s, Time: %0.04fs', $message->getMemory(), $message->getTime()));
+    // or $barbeQ->consume(...), same action
+
+    echo sprintf("Memory: %s, Time: %0.04fs\n", $message->getMemory(), $message->getTime());
 
     if ($i >= $iterations) {
         $barbeQ->stopConsuming();
