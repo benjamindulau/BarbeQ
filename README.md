@@ -82,4 +82,7 @@ foreach ($barbeQ->getMessages('test') as $message) {
 }
 ```
 
+Credits
+-------
 
+[Logo](http://www.yuminette.com/graphisme/barbeq "") by [Yuminette](http://www.yuminette.com/ "")
