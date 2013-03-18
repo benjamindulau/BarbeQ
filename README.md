@@ -1,3 +1,3 @@
-![BarbeQ](https://github.com/benjamindulau/BarbeQ/blob/master/barbeq.jpg)
+![BarbeQ](https://raw.github.com/benjamindulau/BarbeQ/master/barbeq.jpg)
 
 Abstract some Message Queuing system using the Adapter pattern
