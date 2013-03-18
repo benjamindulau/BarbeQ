@@ -8,6 +8,7 @@
  */
 namespace BarbeQ\Adapter;
 
+use BarbeQ\Iterator\MessageIteratorInterface;
 use BarbeQ\Model\MessageInterface;
 
 interface AdapterInterface
@@ -22,11 +23,39 @@ interface AdapterInterface
      */
     public function publish($queue, MessageInterface $message);
 
-    public function getMessageIterator();
+    /**
+     * Returns messages for the given queue
+     *
+     * @param string $queue
+     *
+     * @return MessageIteratorInterface
+     */
+    public function getMessages($queue = null);
 
+    /**
+     * Handles success after a message has been successfully consumed
+     *
+     * @param MessageInterface $message
+     *
+     * @return void
+     */
     public function onSuccess(MessageInterface $message);
 
+
+    /**
+     * Handles error on message consuming
+     *
+     * @param MessageInterface $message
+     *
+     * @return void
+     */
     public function onError(MessageInterface $message);
 
-
+    /**
+     * Stops consuming
+     * Used for instance when using a message limit
+     *
+     * @return mixed
+     */
+    public function stopConsuming();
 }

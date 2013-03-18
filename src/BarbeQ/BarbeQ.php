@@ -11,7 +11,8 @@ namespace BarbeQ;
 use BarbeQ\Adapter\AdapterInterface;
 use BarbeQ\Consumer\ConsumerInterface;
 use BarbeQ\Event\ConsumeEvent;
-use BarbeQ\Exception\BarbeQException;
+use BarbeQ\Exception\ConsumerIndigestionException;
+use BarbeQ\Iterator\MessageIteratorInterface;
 use BarbeQ\Model\MessageInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -20,6 +21,7 @@ class BarbeQ
     protected $adapter;
     protected $messageDispatcher;
     protected $dispatcher;
+    protected $consumingTag;
 
     public function __construct(
         AdapterInterface $adapter,
@@ -40,27 +42,44 @@ class BarbeQ
         return $this->adapter;
     }
 
-    public function createMessage(array $body, $priority)
-    {
-        return $this->adapter->createMessage($body, (int) $priority);
-    }
-
+    /**
+     * Publish a message
+     *
+     * @param string           $queue Target queue to push message in
+     * @param MessageInterface $message Message content
+     */
     public function publish($queue, MessageInterface $message)
     {
+        $message->setQueue($queue);
         $this->getAdapter()->publish($queue, $message);
     }
 
-    public function createAndPublish($queue, array $messageBody, $messagePriority)
+    /**
+     * Publish a message
+     *
+     * @param string           $queue Target queue to push message in
+     * @param MessageInterface $message Message content
+     */
+    public function cook($queue, MessageInterface $message)
     {
-        $message = $this->createMessage($messageBody, $messagePriority);
         $this->publish($queue, $message);
     }
 
-    public function getMessageIterator()
+    /**
+     * @return MessageIteratorInterface
+     */
+    public function getMessages($queue = null)
     {
-        return $this->adapter->getMessageIterator();
+        return $this->adapter->getMessages($queue);
     }
 
+    /**
+     * Dispatches a Message to all interested consumers
+     *
+     * @param  MessageInterface $message
+     *
+     * @throws ConsumerIndigestionException
+     */
     public function consume(MessageInterface $message)
     {
         $consumeEvent = new ConsumeEvent($message);
@@ -74,7 +93,7 @@ class BarbeQ
             $this->adapter->onSuccess($message);
 
             $message->complete();
-        } catch(BarbeQException $e) {
+        } catch(ConsumerIndigestionException $e) {
             $this->adapter->onError($message);
 
             $message->completeWithError();
@@ -82,8 +101,18 @@ class BarbeQ
             $this->dispatcher->dispatch(BarbeQEvents::POST_CONSUME, $consumeEvent);
 
             // TODO
-            throw new BarbeQException("Error while consuming a message", 0, $e);
+            throw new ConsumerIndigestionException("Error while consuming a message", 0, $e);
         }
+    }
+
+    /**
+     * Dispatches a Message to all interested consumers
+     *
+     * @param  MessageInterface $message
+     */
+    public function eat(MessageInterface $message)
+    {
+        $this->consume($message);
     }
 
     /**
@@ -91,9 +120,20 @@ class BarbeQ
      *
      * @param string            $queue
      * @param ConsumerInterface $consumer
+     * @param int               $priority
+     *
+     * @return void
      */
-    public function addConsumer($queue, ConsumerInterface $consumer)
+    public function addConsumer($queue, ConsumerInterface $consumer, $priority = 0)
     {
-        $this->messageDispatcher->addListener($queue, array($consumer, 'consume'));
+        $this->messageDispatcher->addListener($queue, array($consumer, 'consume'), $priority);
+    }
+
+    /**
+     * Stops consuming
+     */
+    public function stopConsuming()
+    {
+        $this->getAdapter()->stopConsuming();
     }
 }

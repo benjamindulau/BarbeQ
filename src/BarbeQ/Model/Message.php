@@ -20,6 +20,7 @@ class Message implements MessageInterface
     protected $queue;
     protected $startTime;
     protected $startMemory;
+    protected $metadata;
 
     public function __construct(array $body = array(), $priority = 0)
     {
@@ -29,6 +30,7 @@ class Message implements MessageInterface
         $this->setState(self::STATE_PENDING);
         $this->time = 0;
         $this->memory = 0;
+        $this->metadata = array();
     }
 
     /**
@@ -46,6 +48,39 @@ class Message implements MessageInterface
     {
         return $this->body;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setMetadata(array $metadata)
+    {
+        $this->metadata = $metadata;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addMetadata($name, $value)
+    {
+        $this->metadata[$name] = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMetadata()
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMetadataValue($name, $default = null)
+    {
+        return isset($this->metadata[$name]) ? $this->metadata[$name] : $default;
+    }
+
 
     /**
      * {@inheritdoc}
@@ -86,7 +121,7 @@ class Message implements MessageInterface
      */
     public function getState()
     {
-        return $this->getState();
+        return $this->state;
     }
 
     /**
@@ -176,5 +211,25 @@ class Message implements MessageInterface
     public function completeWithError()
     {
         // TODO: Implement completeWithError() method.
+    }
+
+    public function toJson()
+    {
+        return json_encode(array(
+            'state' => $this->getState(),
+            'priority' => $this->getPriority(),
+            'queue' => $this->getQueue(),
+            'body' => $this->getBody(),
+        ));
+    }
+
+    public static function fromJson($json)
+    {
+        $data = json_decode($json, true);
+        $message = new self($data['body'], $data['priority']);
+        $message->setState($data['state']);
+        $message->setQueue($data['queue']);
+
+        return $message;
     }
 }

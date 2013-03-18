@@ -8,6 +8,7 @@
  */
 namespace BarbeQ\Adapter;
 
+use BarbeQ\Iterator\AmqpMessageIterator;
 use BarbeQ\Model\Message;
 use BarbeQ\Model\MessageInterface;
 use PhpAmqpLib\Connection\AMQPConnection;
@@ -21,6 +22,7 @@ class AmqpAdapter implements AdapterInterface
     protected $queues;
     protected $options;
     protected $channel;
+    protected $consumingTag;
 
     protected $exchangeDeclared = false;
 
@@ -39,9 +41,7 @@ class AmqpAdapter implements AdapterInterface
     {
         $this->declareEverything();
 
-        $body = serialize($message->getBody());
-
-        $msg = new AMQPMessage($body, array(
+        $msg = new AMQPMessage($message->toJson(), array(
             'content_type' => $this->options['content_type'],
             'delivery_mode' => $this->options['delivery_mode'],
         ));
@@ -49,19 +49,29 @@ class AmqpAdapter implements AdapterInterface
         $this->getChannel()->basic_publish($msg, $this->exchange['name'], $queue);
     }
 
-    public function getMessageIterator()
+    public function getMessages($queue = null)
     {
-        // TODO: Implement getMessageIterator() method.
+        $this->consumingTag = sprintf('ANO_BARBEQ_CONSUMER_%s_%s_%s', gethostname(), getmypid(), uniqid());
+
+        return new AmqpMessageIterator($this->getChannel(), $queue, $this->consumingTag);
     }
 
     public function onSuccess(MessageInterface $message)
     {
-        // TODO: Implement onSuccess() method.
+        error_log('success');
+        $amqpMessage = $message->getMetadataValue('AmqpMessage');
+        $amqpMessage->delivery_info['channel']->basic_ack($amqpMessage->delivery_info['delivery_tag']);
     }
 
     public function onError(MessageInterface $message)
     {
-        // TODO: Implement onError() method.
+        $amqpMessage = $message->getMetadataValue('AmqpMessage');
+        $amqpMessage->delivery_info['channel']->basic_reject($amqpMessage->delivery_info['delivery_tag'], false);
+    }
+
+    public function stopConsuming()
+    {
+        $this->getChannel()->basic_cancel($this->consumingTag);
     }
 
     public function declareEverything()

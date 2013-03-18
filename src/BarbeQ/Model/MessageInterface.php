@@ -33,6 +33,42 @@ interface MessageInterface
     public function getBody();
 
     /**
+     * Sets metadata
+     *
+     * @param array $metadata
+     *
+     * @return void
+     */
+    public function setMetadata(array $metadata);
+
+    /**
+     * Returns all metadata
+     *
+     * @return array
+     */
+    public function getMetadata();
+
+    /**
+     * Returns a metadata value
+     *
+     * @param string $name
+     * @param mixed  $default
+     *
+     * @return mixed
+     */
+    public function getMetadataValue($name, $default = null);
+
+    /**
+     * Adds a metadata value
+     *
+     * @param string $name
+     * @param mixed  $value
+     *
+     * @return void
+     */
+    public function addMetadata($name, $value);
+
+    /**
      * Returns message's current state
      *
      * @return int
@@ -124,4 +160,19 @@ interface MessageInterface
      * @return string
      */
     public function getQueue();
+
+    /**
+     * Serializes Message metadata + body to Json format
+     *
+     * @return string
+     */
+    public function toJson();
+
+    /**
+     * Unserializes data from Json and returns a new Message
+     *
+     * @param string $json
+     * @return MessageInterface
+     */
+    public static function fromJson($json);
 }
