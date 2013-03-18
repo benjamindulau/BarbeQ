@@ -13,14 +13,6 @@ use BarbeQ\Model\MessageInterface;
 interface AdapterInterface
 {
     /**
-     * @param array $body
-     * @param int   $priority
-     *
-     * @return MessageInterface
-     */
-    public function createMessage(array $body, $priority);
-
-    /**
      * Publish (push) a message to the queue
      *
      * @param string $queue
