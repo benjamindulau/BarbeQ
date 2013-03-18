@@ -9,6 +9,7 @@
 namespace BarbeQ;
 
 use BarbeQ\Adapter\AdapterInterface;
+use BarbeQ\Consumer\ConsumerInterface;
 use BarbeQ\Event\ConsumeEvent;
 use BarbeQ\Exception\BarbeQException;
 use BarbeQ\Model\MessageInterface;
@@ -83,5 +84,16 @@ class BarbeQ
             // TODO
             throw new BarbeQException("Error while consuming a message", 0, $e);
         }
+    }
+
+    /**
+     * Adds a consumer for messages from the given queue name
+     *
+     * @param string            $queue
+     * @param ConsumerInterface $consumer
+     */
+    public function addConsumer($queue, ConsumerInterface $consumer)
+    {
+        $this->messageDispatcher->addListener($queue, array($consumer, 'consume'));
     }
 }
