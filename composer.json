@@ -1,0 +1,23 @@
+{
+    "name":         "ano/barbeq",
+    "description":  "Abstraction of some Message Queuing system using Adapter pattern",
+    "keywords":     ["message", "queue", "queuing", "rabbitmq"],
+    "type":         "symfony-bundle",
+    "license":      "MIT",
+    "authors": [
+        {
+            "name":     "Benjamin Dulau",
+            "email":    "benjamin.dulau@anonymation.com",
+            "homepage": "http://www.anonymation.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/event-dispatcher": ">=2.0",
+        "symfony/options-resolver": ">=2.0"
+    },
+    "autoload": {
+        "psr-0": { "BarbeQ": "src/" }
+    }
+}
+
