@@ -81,3 +81,18 @@ Credits
 -------
 
 [Logo](http://www.yuminette.com/graphisme/barbeq "") by [Yuminette](http://www.yuminette.com/ "")
+
+License
+-------
+
+This bundle is under the MIT license. See the complete license in the bundle:
+
+    LICENSE
+
+Testing
+-------
+
+```bash
+$ php composer.phar update --dev
+$ phpunit
+```
