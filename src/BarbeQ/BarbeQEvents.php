@@ -10,6 +10,6 @@ namespace BarbeQ;
 
 final class BarbeQEvents
 {
-    const PRE_CONSUME = 'ano_mq.pre_consume';
-    const POST_CONSUME = 'ano_mq.post_consume';
+    const PRE_CONSUME = 'barbeq.pre_consume';
+    const POST_CONSUME = 'barbeq.post_consume';
 }

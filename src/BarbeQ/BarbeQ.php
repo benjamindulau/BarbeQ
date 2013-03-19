@@ -79,17 +79,16 @@ class BarbeQ
      *
      * @param  string   $queue
      * @param  int      $amount
-     * @param  \Closure $callback
      *
      * @return void
      */
-    public function consume($queue, $amount = 50, \Closure $callback)
+    public function consume($queue, $amount = 50)
     {
         $i = 0;
         foreach ($this->getMessages($queue) as $message) {
             $i++;
+            $message->addMetadata('index', $i);
             $this->consumeOne($message);
-            $callback($i, $message);
 
             if ($i >= $amount) {
                 $this->stopConsuming();
@@ -119,6 +118,8 @@ class BarbeQ
             $this->adapter->onSuccess($message);
 
             $message->complete();
+
+            $this->dispatcher->dispatch(BarbeQEvents::POST_CONSUME, $consumeEvent);
         } catch(ConsumerIndigestionException $e) {
             $this->adapter->onError($message);
 
@@ -137,13 +138,12 @@ class BarbeQ
      *
      * @param  string   $queue
      * @param  int      $amount
-     * @param  \Closure $callback
      *
      * @return void
      */
-    public function eat($queue, $amount = 50, \Closure $callback)
+    public function eat($queue, $amount = 50)
     {
-        $this->consume($queue, $amount, $callback);
+        $this->consume($queue, $amount);
     }
 
     /**
@@ -166,5 +166,29 @@ class BarbeQ
     public function stopConsuming()
     {
         $this->getAdapter()->stopConsuming();
+    }
+
+    /**
+     * Adds an event listener that listens on the specified events.
+     *
+     * @param string   $eventName The event to listen on
+     * @param callable $listener  The listener
+     * @param integer  $priority  The higher this value, the earlier an event
+     *                            listener will be triggered in the chain (defaults to 0)
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return void
+     */
+    public function addListener($eventName, $listener, $priority = 0)
+    {
+        if (!in_array($eventName, array(
+            BarbeQEvents::PRE_CONSUME,
+            BarbeQEvents::POST_CONSUME,
+        ))) {
+            throw new \InvalidArgumentException(sprintf('"%s" event does not exist in BarbeQ.', $eventName));
+        }
+
+        $this->dispatcher->addListener($eventName, $listener, $priority);
     }
 }

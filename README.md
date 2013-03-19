@@ -64,13 +64,17 @@ $barbeQ = new BarbeQ($adapter, $messageDispatcher, $dispatcher);
 $testConsumer = new TestConsumer();
 $barbeQ->addConsumer('test', $testConsumer);
 
-$barbeQ->eat(
-    'test', 
-    5, 
-    function($i, MessageInterface $message) {
-        error_log(sprintf('For Iteration #%d, Memory: %s, Time: %0.04fs', $i, $message->getMemory(), $message->getTime()));
-    }
-);
+// Trace what's happening
+$barbeQ->addListener('barbeq.pre_consume', function(ConsumeEvent $event) {
+    echo sprintf("Start consuming message #%d\n", $event->getMessage()->getMetadataValue('index'));
+});
+
+$barbeQ->addListener('barbeq.post_consume', function(ConsumeEvent $event) {
+    echo sprintf("Memory: %s, Time: %0.04fs\n", $event->getMessage()->getMemory(), $event->getMessage()->getTime());
+});
+
+$barbeQ->eat('test', 5);
+// or $barbeQ->consume(...), same action
 ```
 
 Credits
