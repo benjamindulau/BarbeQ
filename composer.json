@@ -2,7 +2,7 @@
     "name":         "ano/barbeq",
     "description":  "Abstraction of some Message Queuing system using Adapter pattern",
     "keywords":     ["message", "queue", "queuing", "rabbitmq"],
-    "type":         "symfony-bundle",
+    "type":         "library",
     "license":      "MIT",
     "authors": [
         {
