@@ -2,7 +2,7 @@
 
 Abstract some Message Queuing system using the Adapter pattern
 
-[![Build Status](http://travis-ci.org/benjamindulau/BarbeQ.png)](http://travis-ci.org/#!/benjamindulau/BarbeQ)
+[![Build Status](https://travis-ci.org/benjamindulau/BarbeQ.png?branch=master)](https://travis-ci.org/benjamindulau/BarbeQ)
 
 Work In Progress
 ----------------
