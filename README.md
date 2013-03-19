@@ -64,9 +64,13 @@ $barbeQ = new BarbeQ($adapter, $messageDispatcher, $dispatcher);
 $testConsumer = new TestConsumer();
 $barbeQ->addConsumer('test', $testConsumer);
 
-$barbeQ->eat('test', 5, function($i, MessageInterface $message) {
-    error_log(sprintf('For Iteration #%d, Memory: %s, Time: %0.04fs', $i, $message->getMemory(), $message->getTime()));
-});
+$barbeQ->eat(
+    'test', 
+    5, 
+    function($i, MessageInterface $message) {
+        error_log(sprintf('For Iteration #%d, Memory: %s, Time: %0.04fs', $i, $message->getMemory(), $message->getTime()));
+    }
+);
 ```
 
 Credits
