@@ -69,4 +69,7 @@ $barbeQ->eat('test', 5, function($i, MessageInterface $message) {
 });
 ```
 
+Credits
+-------
 
+[Logo](http://www.yuminette.com/graphisme/barbeq "") by [Yuminette](http://www.yuminette.com/ "")
