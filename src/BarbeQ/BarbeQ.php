@@ -56,6 +56,7 @@ class BarbeQ
 
     /**
      * Publish a message
+     * Proxy method for publish()
      *
      * @param string           $queue Target queue to push message in
      * @param MessageInterface $message Message content
@@ -74,13 +75,38 @@ class BarbeQ
     }
 
     /**
+     * Consumes n messages and calls $callback on each iteration
+     *
+     * @param  string   $queue
+     * @param  int      $amount
+     * @param  \Closure $callback
+     *
+     * @return void
+     */
+    public function consume($queue, $amount = 50, \Closure $callback)
+    {
+        $i = 0;
+        foreach ($this->getMessages($queue) as $message) {
+            $i++;
+            $this->consumeOne($message);
+            $callback($i, $message);
+
+            if ($i >= $amount) {
+                $this->stopConsuming();
+
+                return;
+            }
+        }
+    }
+
+    /**
      * Dispatches a Message to all interested consumers
      *
      * @param  MessageInterface $message
      *
      * @throws ConsumerIndigestionException
      */
-    public function consume(MessageInterface $message)
+    public function consumeOne(MessageInterface $message)
     {
         $consumeEvent = new ConsumeEvent($message);
 
@@ -106,13 +132,18 @@ class BarbeQ
     }
 
     /**
-     * Dispatches a Message to all interested consumers
+     * Consumes n messages and calls $callback on each iteration.
+     * Proxy method for consume()
      *
-     * @param  MessageInterface $message
+     * @param  string   $queue
+     * @param  int      $amount
+     * @param  \Closure $callback
+     *
+     * @return void
      */
-    public function eat(MessageInterface $message)
+    public function eat($queue, $amount = 50, \Closure $callback)
     {
-        $this->consume($message);
+        $this->consume($queue, $amount, $callback);
     }
 
     /**

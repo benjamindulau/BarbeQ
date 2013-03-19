@@ -64,22 +64,9 @@ $barbeQ = new BarbeQ($adapter, $messageDispatcher, $dispatcher);
 $testConsumer = new TestConsumer();
 $barbeQ->addConsumer('test', $testConsumer);
 
-$iterations = 3;
-$i = 0;
-foreach ($barbeQ->getMessages('test') as $message) {
-    $i++;
-    echo sprintf("Iteration #%d\n", $i);
-
-    $barbeQ->eat($message);
-    // or $barbeQ->consume(...), same action
-
-    echo sprintf("Memory: %s, Time: %0.04fs\n", $message->getMemory(), $message->getTime());
-
-    if ($i >= $iterations) {
-        $barbeQ->stopConsuming();
-        break;
-    }
-}
+$barbeQ->eat('test', 5, function($i, MessageInterface $message) {
+    error_log(sprintf('For Iteration #%d, Memory: %s, Time: %0.04fs', $i, $message->getMemory(), $message->getTime()));
+});
 ```
 
 
