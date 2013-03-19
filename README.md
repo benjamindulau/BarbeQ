@@ -79,10 +79,13 @@ $barbeQ->eat('test', 5);
 // or $barbeQ->consume(...), same action
 ```
 
-Credits
+Testing
 -------
 
-[Logo](http://www.yuminette.com/graphisme/barbeq "") by [Yuminette](http://www.yuminette.com/ "")
+```bash
+$ php composer.phar update --dev
+$ phpunit
+```
 
 License
 -------
@@ -91,10 +94,10 @@ This bundle is under the MIT license. See the complete license in the bundle:
 
     LICENSE
 
-Testing
+
+Credits
 -------
 
-```bash
-$ php composer.phar update --dev
-$ phpunit
-```
+[Logo](http://www.yuminette.com/graphisme/barbeq "") by [Yuminette](http://www.yuminette.com/ "")
+
+
