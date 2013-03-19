@@ -210,7 +210,8 @@ class Message implements MessageInterface
      */
     public function completeWithError()
     {
-        // TODO: Implement completeWithError() method.
+        $this->complete();
+        $this->setState(self::STATE_ERROR);
     }
 
     public function toJson()

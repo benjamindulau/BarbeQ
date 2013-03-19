@@ -115,15 +115,14 @@ class BarbeQ
             $message->start();
 
             $this->messageDispatcher->dispatch($message->getQueue(), $consumeEvent);
-            $this->adapter->onSuccess($message);
 
             $message->complete();
+            $this->adapter->onSuccess($message);
 
             $this->dispatcher->dispatch(BarbeQEvents::POST_CONSUME, $consumeEvent);
         } catch(ConsumerIndigestionException $e) {
-            $this->adapter->onError($message);
-
             $message->completeWithError();
+            $this->adapter->onError($message);
 
             $this->dispatcher->dispatch(BarbeQEvents::POST_CONSUME, $consumeEvent);
 

@@ -27,11 +27,18 @@ use BarbeQ\Model\Message;
 $messageDispatcher = new EventDispatcher();
 $dispatcher = new EventDispatcher();
 
+// AMQP
 $connection = array('host' => 'localhost');
 $exchange = array('name' => 'test_direct');
 $queues = array(array('name' => 'test'));
-
 $adapter = new AmqpAdapter($connection, $exchange, $queues);
+
+// PDO
+//$pdo = new \PDO('mysql:dbname=barbeq', 'root', '');
+//$adapter = new \BarbeQ\Adapter\PdoAdapter($pdo, array(
+//    'table' => 'queuing',
+//));
+
 $barbeQ = new BarbeQ($adapter, $messageDispatcher, $dispatcher);
 
 $barbeQ->cook('test', new Message(array(
@@ -56,11 +63,18 @@ use Acme\PocBundle\Consumer\TestConsumer;
 $messageDispatcher = new EventDispatcher();
 $dispatcher = new EventDispatcher();
 
+// AMQP
 $connection = array('host' => 'localhost');
 $exchange = array('name' => 'test_direct');
 $queues = array(array('name' => 'test'));
-
 $adapter = new AmqpAdapter($connection, $exchange, $queues);
+
+// PDO
+//$pdo = new \PDO('mysql:dbname=barbeq', 'root', '');
+//$adapter = new \BarbeQ\Adapter\PdoAdapter($pdo, array(
+//    'table' => 'queuing',
+//));
+
 $barbeQ = new BarbeQ($adapter, $messageDispatcher, $dispatcher);
 
 $testConsumer = new TestConsumer();
