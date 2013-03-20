@@ -148,13 +148,6 @@ class AmqpAdapter implements AdapterInterface
     {
         $resolver = new OptionsResolver();
         $resolver
-            ->setRequired(array(
-                'host',
-                'port',
-                'user',
-                'password',
-                'vhost',
-            ))
             ->setDefaults(array(
                 'host' => 'localhost',
                 'port' => 5672,
