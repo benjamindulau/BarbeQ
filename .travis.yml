@@ -4,12 +4,10 @@ php:
   - 5.3
   - 5.4
 
+services:
+  - rabbitmq
+
 before_script:
-  - sudo echo 'deb http://www.rabbitmq.com/debian/ testing main' >> /etc/apt/sources.list.d/rabbitmq.list
-  - sudo wget -q -O - http://www.rabbitmq.com/rabbitmq-signing-key-public.asc | sudo apt-key add -
-  - sudo apt-get update
-  - sudo apt-get install rabbitmq-server
-  - sudo rabbitmq-plugins enable rabbitmq_management
   - composer install --dev --prefer-source
 
 script: phpunit --coverage-text
