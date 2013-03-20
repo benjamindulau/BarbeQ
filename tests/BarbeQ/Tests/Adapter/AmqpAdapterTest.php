@@ -13,6 +13,7 @@ use BarbeQ\Model\Message;
 use BarbeQ\Model\MessageInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPConnection;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use RabbitMQ\Management\APIClient;
 use RabbitMQ\Management\Entity\Queue;
 use RabbitMQ\Management\HttpClient;
@@ -63,15 +64,18 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 
         $this->testMessage = new Message(array('dummy'));
 
-        $this->connection = new AMQPConnection(
-            $this->connectionOptions['host'],
-            $this->connectionOptions['port'],
-            $this->connectionOptions['user'],
-            $this->connectionOptions['password'],
-            $this->connectionOptions['vhost']
-        );
-
-        $this->channel = $this->connection->channel();
+        try {
+            $this->connection = new AMQPConnection(
+                $this->connectionOptions['host'],
+                $this->connectionOptions['port'],
+                $this->connectionOptions['user'],
+                $this->connectionOptions['password'],
+                $this->connectionOptions['vhost']
+            );
+            $this->channel = $this->connection->channel();
+        } catch(AMQPRuntimeException $e) {
+            $this->connection = false;
+        }
 
         $client = HttpClient::factory(array(
             'host' => 'localhost'
@@ -81,15 +85,8 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        unset($this->connectionOptions);
-        unset($this->testExchangeOptions);
-        unset($this->testQueueOptions);
-        unset($this->testMessage);
-
-        $this->channel->close();
-        $this->connection->close();
-        unset($this->channel);
-        unset($this->connection);
+//        $this->channel->close();
+//        $this->connection->close();
     }
 
     public function testConnectionDefaultOptions()
@@ -246,6 +243,8 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testQueueIsDeclaredOnPublish()
     {
+        $this->ensureRabbitMqServerIsPresent();
+
         $adapter = $this->createTestAdapter();
         $adapter->publish(self::TEST_QUEUE, $this->testMessage);
 
@@ -258,6 +257,8 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testExchangeIsDeclaredOnPublish()
     {
+        $this->ensureRabbitMqServerIsPresent();
+
         $adapter = $this->createTestAdapter();
         $adapter->publish(self::TEST_QUEUE, $this->testMessage);
 
@@ -270,6 +271,8 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testQueueAndExchangeAreBindedOnPublish()
     {
+        $this->ensureRabbitMqServerIsPresent();
+
         $adapter = $this->createTestAdapter();
         $adapter->publish(self::TEST_QUEUE, $this->testMessage);
 
@@ -284,6 +287,13 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         }
 
         $this->cleanUpQueuesAndExchanges();
+    }
+
+    protected function ensureRabbitMqServerIsPresent()
+    {
+        if (false === $this->connection) {
+            $this->markTestSkipped('RabbitMQ server is not available.');
+        }
     }
 
     /**
