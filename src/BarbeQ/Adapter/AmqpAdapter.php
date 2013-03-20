@@ -58,7 +58,6 @@ class AmqpAdapter implements AdapterInterface
 
     public function onSuccess(MessageInterface $message)
     {
-        error_log('success');
         $amqpMessage = $message->getMetadataValue('AmqpMessage');
         $amqpMessage->delivery_info['channel']->basic_ack($amqpMessage->delivery_info['delivery_tag']);
     }
