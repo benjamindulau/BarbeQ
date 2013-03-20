@@ -9,15 +9,27 @@
 namespace BarbeQ\Tests\Adapter;
 
 use BarbeQ\Adapter\AmqpAdapter;
+use BarbeQ\Model\Message;
+use BarbeQ\Model\MessageInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPConnection;
+use RabbitMQ\Management\APIClient;
+use RabbitMQ\Management\Entity\Queue;
+use RabbitMQ\Management\HttpClient;
 
 class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var array
-     */
+    const TEST_QUEUE = 'ano_amq.tests.sausage_queue';
+    const TEST_EXCHANGE = 'ano_amq.tests.sausage_exchange';
+
     protected $connectionOptions;
+    protected $testQueueOptions;
+    protected $testExchangeOptions;
+
+    /**
+     * @var MessageInterface
+     */
+    protected $testMessage;
 
     /**
      * @var AMQPConnection
@@ -25,14 +37,14 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
     protected $connection;
 
     /**
-     * @var array
-     */
-    protected $dummyQueueOptions;
-
-    /**
      * @var AMQPChannel
      */
     protected $channel;
+
+    /**
+     * @var APIClient
+     */
+    protected $apiClient;
 
     protected function setUp()
     {
@@ -44,19 +56,45 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
             'vhost' => '/',
         );
 
-        $this->dummyQueueOptions = array(
-            array('name' => 'test')
+        $this->testQueueOptions = array(
+            array('name' => self::TEST_QUEUE)
         );
+        $this->testExchangeOptions = array('name' => self::TEST_EXCHANGE);
+
+        $this->testMessage = new Message(array('dummy'));
+
+        $this->connection = new AMQPConnection(
+            $this->connectionOptions['host'],
+            $this->connectionOptions['port'],
+            $this->connectionOptions['user'],
+            $this->connectionOptions['password'],
+            $this->connectionOptions['vhost']
+        );
+
+        $this->channel = $this->connection->channel();
+
+        $client = HttpClient::factory(array(
+            'host' => 'localhost'
+        ));
+        $this->apiClient = new APIClient($client);
     }
 
     public function tearDown()
     {
         unset($this->connectionOptions);
+        unset($this->testExchangeOptions);
+        unset($this->testQueueOptions);
+        unset($this->testMessage);
+
+        $this->channel->close();
+        $this->connection->close();
+        unset($this->channel);
+        unset($this->connection);
     }
 
     public function testConnectionDefaultOptions()
     {
-        $adapter = new AmqpAdapter(array(), array(), $this->dummyQueueOptions);
+        $adapter = new AmqpAdapter(array(), array(), $this->testQueueOptions);
         $property = new \ReflectionProperty($adapter, 'connection');
         $property->setAccessible(true);
         $expectedValues = array(
@@ -80,7 +118,7 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
             'vhost' => 'myvhost',
         );
 
-        $adapter = new AmqpAdapter($connection, array(), $this->dummyQueueOptions);
+        $adapter = new AmqpAdapter($connection, array(), $this->testQueueOptions);
         $property = new \ReflectionProperty($adapter, 'connection');
         $property->setAccessible(true);
 
@@ -92,7 +130,7 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         $adapter = new AmqpAdapter(
             $this->connectionOptions,
             array(), // exchange
-            $this->dummyQueueOptions
+            $this->testQueueOptions
         );
 
         $property = new \ReflectionProperty($adapter, 'exchange');
@@ -129,7 +167,7 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         $adapter = new AmqpAdapter(
             $this->connectionOptions,
             $exchange, // exchange
-            $this->dummyQueueOptions
+            $this->testQueueOptions
         );
 
         $property = new \ReflectionProperty($adapter, 'exchange');
@@ -160,13 +198,13 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         $adapter = new AmqpAdapter(
             $this->connectionOptions,
             array(), // exchange
-            $this->dummyQueueOptions
+            $this->testQueueOptions
         );
 
         $property = new \ReflectionProperty($adapter, 'queues');
         $property->setAccessible(true);
         $expectedValues = array(
-            'name' => 'test',
+            'name' => self::TEST_QUEUE,
             'passive' => false,
             'durable' => true,
             'exclusive' => false,
@@ -177,13 +215,13 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         );
 
         $resultingQueues = $property->getValue($adapter);
-        $this->assertEquals($expectedValues, $resultingQueues['test']);
+        $this->assertEquals($expectedValues, $resultingQueues[self::TEST_QUEUE]);
     }
 
     public function testQueueOptionsOverride()
     {
         $queue = array(
-            'name' => 'test',
+            'name' => self::TEST_QUEUE,
             'passive' => true,
             'durable' => false,
             'exclusive' => true,
@@ -203,7 +241,75 @@ class AmqpAdapterTest extends \PHPUnit_Framework_TestCase
         $property->setAccessible(true);
 
         $resultingQueues = $property->getValue($adapter);
-        $this->assertEquals($queue, $resultingQueues['test']);
+        $this->assertEquals($queue, $resultingQueues[self::TEST_QUEUE]);
     }
 
+    public function testQueueIsDeclaredOnPublish()
+    {
+        $adapter = $this->createTestAdapter();
+        $adapter->publish(self::TEST_QUEUE, $this->testMessage);
+
+        // test
+        $queue = $this->apiClient->getQueue('/', self::TEST_QUEUE);
+        $this->assertEquals($queue->name, self::TEST_QUEUE);
+
+        $this->cleanUpQueuesAndExchanges();
+    }
+
+    public function testExchangeIsDeclaredOnPublish()
+    {
+        $adapter = $this->createTestAdapter();
+        $adapter->publish(self::TEST_QUEUE, $this->testMessage);
+
+        // test
+        $exchange = $this->apiClient->getExchange('/', self::TEST_EXCHANGE);
+        $this->assertEquals($exchange->name, self::TEST_EXCHANGE);
+
+        $this->cleanUpQueuesAndExchanges();
+    }
+
+    public function testQueueAndExchangeAreBindedOnPublish()
+    {
+        $adapter = $this->createTestAdapter();
+        $adapter->publish(self::TEST_QUEUE, $this->testMessage);
+
+        $bindings = $this->apiClient->listBindingsByExchangeAndQueue(
+            '/',
+            self::TEST_EXCHANGE,
+            self::TEST_QUEUE
+        );
+        foreach($bindings as $binding) {
+            $this->assertEquals(self::TEST_EXCHANGE, $binding->source);
+            $this->assertEquals(self::TEST_QUEUE, $binding->destination);
+        }
+
+        $this->cleanUpQueuesAndExchanges();
+    }
+
+    /**
+     * @return Queue
+     */
+    protected function getTestQueueEntity()
+    {
+        $queue = new Queue();
+        $queue->name = self::TEST_QUEUE;
+        $queue->vhost = '/';
+
+        return $queue;
+    }
+
+    protected function cleanUpQueuesAndExchanges()
+    {
+        // cleanup
+        $this->apiClient->deleteQueue('/', self::TEST_QUEUE);
+        $this->apiClient->deleteExchange('/', self::TEST_EXCHANGE);
+    }
+
+    /**
+     * @return \BarbeQ\Adapter\AmqpAdapter
+     */
+    protected function createTestAdapter()
+    {
+        return new AmqpAdapter($this->connectionOptions, $this->testExchangeOptions, $this->testQueueOptions);
+    }
 }

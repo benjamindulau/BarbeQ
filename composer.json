@@ -18,7 +18,8 @@
     },
     "require-dev": {
         "phpunit/phpunit": "3.*",
-        "videlalvaro/php-amqplib" : "2.0.*"
+        "videlalvaro/php-amqplib" : "2.0.*",
+        "alchemy/rabbitmq-management-client": "dev-master"
     },
     "autoload": {
         "psr-0": { "BarbeQ": "src/" }
