@@ -160,6 +160,18 @@ class BarbeQ
     }
 
     /**
+     * Return a list of consumers for the given queue
+     *
+     * @param string $queue
+     *
+     * @return ConsumerInterface[]|array
+     */
+    public function getConsumers($queue = null)
+    {
+        return $this->messageDispatcher->getListeners($queue);
+    }
+
+    /**
      * Stops consuming
      */
     public function stopConsuming()
