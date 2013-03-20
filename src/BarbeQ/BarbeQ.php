@@ -90,7 +90,7 @@ class BarbeQ
             $message->addMetadata('index', $i);
             $this->consumeOne($message);
 
-            if ($i >= $amount) {
+            if ($amount > 0 && $i >= $amount) {
                 $this->stopConsuming();
 
                 return;
