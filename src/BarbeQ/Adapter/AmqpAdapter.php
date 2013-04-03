@@ -65,7 +65,10 @@ class AmqpAdapter implements AdapterInterface
     public function onError(MessageInterface $message)
     {
         $amqpMessage = $message->getMetadataValue('AmqpMessage');
-        $amqpMessage->delivery_info['channel']->basic_reject($amqpMessage->delivery_info['delivery_tag'], false);
+        $amqpMessage->delivery_info['channel']->basic_reject(
+            $amqpMessage->delivery_info['delivery_tag'],
+            (bool) $this->options['requeue_on_error']
+        );
     }
 
     public function stopConsuming()
@@ -135,9 +138,11 @@ class AmqpAdapter implements AdapterInterface
             ->setDefaults(array(
                 'delivery_mode' => 2,
                 'content_type' => 'text/plain',
+                'requeue_on_error' => true,
             ))
             ->setAllowedValues(array(
                 'delivery_mode' => array(1, 2),
+                'requeue_on_error' => array(true, false),
             ))
         ;
 
